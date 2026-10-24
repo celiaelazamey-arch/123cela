@@ -1,0 +1,12 @@
+APP_ACCESS_PASSWORD="replace-with-a-strong-local-password"
+SESSION_SECRET="replace-with-at-least-32-random-characters"
+
+# Workers AI is the default provider.
+AI_PROVIDER="cloudflare"
+
+# For local NVIDIA NIM testing, change AI_PROVIDER and add your own API key.
+# Keep a local key in ignored .dev.vars; production never uses the NIM key.
+# The separate manual GitHub smoke test uses the NVIDIA_API_KEY repository secret.
+# AI_PROVIDER="nvidia"
+# NVIDIA_API_KEY="nvapi-your-key"
+# NVIDIA_MODEL="meta/llama-3.3-70b-instruct"
