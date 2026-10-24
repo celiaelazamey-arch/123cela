@@ -1,0 +1,961 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111916" />
+    <meta
+      name="description"
+      content="cela.sh: مساحة عربية لقراءة صفحات الويب العامة بأمان."
+    />
+    <title>cela.sh | مساحة القراءة الآمنة</title>
+    <link rel="stylesheet" href="/ccelia.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="التنقل">
+        <a class="brand" href="/" aria-label="cela.sh، الصفحة الرئيسية">
+          <span class="brand-mark" aria-hidden="true"><span>C</span></span>
+          <span class="brand-copy">
+            <strong>cela.sh</strong>
+            <small>مساحة القراءة الآمنة</small>
+          </span>
+        </a>
+        <nav class="side-nav" aria-label="القائمة الرئيسية">
+          <button class="nav-item active" id="new-task-nav" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>مهمة جديدة</span>
+          </button>
+          <button class="nav-item" id="history-nav" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="8.5" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            <span>سجل القراءة</span>
+          </button>
+          <button class="nav-item" id="business-nav" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 19V5m0 14h16M7 15l4-4 3 2 5-6" />
+              <path d="M15 7h4v4" />
+            </svg>
+            <span>فرص من تخصصي</span>
+          </button>
+          <button class="nav-item" id="safety-nav" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="m12 3 7 3v5c0 4.5-2.7 7.9-7 10-4.3-2.1-7-5.5-7-10V6l7-3Z"
+              />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            <span>سياسة الأمان</span>
+          </button>
+        </nav>
+        <section class="sidebar-section project-section" aria-label="المشروع">
+          <div class="section-label">مساحة العمل</div>
+          <div class="project-card">
+            <span class="project-mark" aria-hidden="true">C</span>
+            <span class="project-copy">
+              <strong>cela.sh</strong>
+              <small>استكشاف الويب العام</small>
+            </span>
+            <span class="project-dot" aria-label="نشط"></span>
+          </div>
+        </section>
+        <section
+          id="recent-section"
+          class="sidebar-section recent-section"
+          aria-label="المهام الأخيرة"
+        >
+          <div class="section-label">
+            <span>المهام الأخيرة</span>
+            <span id="history-count" class="section-count">0</span>
+          </div>
+          <div id="history-list" class="history-list"></div>
+          <p id="history-empty" class="history-empty">ستظهر مهامك هنا</p>
+        </section>
+        <div class="sidebar-footer">
+          <span class="user-avatar" aria-hidden="true">C</span>
+          <span class="user-copy">
+            <strong>Celia Elazamey</strong>
+            <small>مساحة شخصية</small>
+          </span>
+          <span class="user-presence" aria-label="متصل"></span>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="model-summary">
+            <span class="model-mark" aria-hidden="true">C</span>
+            <span class="model-copy">
+              <strong>مساعد cela.sh</strong>
+              <small id="model">جارٍ فحص النموذج</small>
+            </span>
+            <span class="model-chevron" aria-hidden="true">⌄</span>
+          </div>
+          <div class="topbar-actions">
+            <span class="read-mode">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="m12 3 7 3v5c0 4.5-2.7 7.9-7 10-4.3-2.1-7-5.5-7-10V6l7-3Z"
+                />
+              </svg>
+              قراءة عامة فقط
+            </span>
+            <span id="service-pill" class="service-pill offline"
+              >جارٍ فحص الخدمة</span
+            >
+            <button id="logout" class="logout-button" hidden>خروج آمن</button>
+          </div>
+        </header>
+        <p id="config" class="config-notice" hidden></p>
+
+        <section class="workspace" aria-label="المحادثة">
+          <div id="empty-state" class="empty-state">
+            <div class="hero">
+              <div class="hero-orbit" aria-hidden="true">
+                <span>C</span>
+              </div>
+              <div class="hero-kicker">مساحة قراءة ذكية</div>
+              <h1>اقرأ أبعد،<br /><span>بضجيجٍ أقل.</span></h1>
+              <p>
+                اكتشف صفحة عامة أو ابحث عن موضوع. يعرض cela.sh الخطة أولًا، ثم
+                يقرأ المحتوى بإذن واضح، من دون تسجيل دخول أو تغييرات.
+              </p>
+            </div>
+          </div>
+
+          <div id="thread" class="thread" aria-live="polite"></div>
+
+          <form id="composer" class="composer">
+            <label class="composer-label" for="task">من أين نبدأ؟</label>
+            <textarea
+              id="task"
+              maxlength="2000"
+              aria-label="مهمة البحث"
+              placeholder="ألصق رابطًا عامًا أو اكتب موضوعًا تريد استكشافه..."
+              required
+            ></textarea>
+            <div class="composer-bottom">
+              <div class="composer-hints">
+                <span class="hint-chip">HTTPS فقط</span>
+                <span class="hint-chip">قراءة بلا تفاعل</span>
+                <small
+                  >لا تكتب كلمات مرور أو أسرارًا، ولا تفتح رابطًا يُحدث تغييرًا
+                  عند تحميله.</small
+                >
+              </div>
+              <button
+                id="cancel-task"
+                class="cancel-task"
+                type="button"
+                title="الإيقاف يغلق الجلسة، لكن الحجز الداخلي للمحاولة يبقى محسوبًا ضمن حد اليوم."
+                hidden
+              >
+                إيقاف المهمة
+              </button>
+              <button id="send" class="send" aria-label="أنشئ خطة">↑</button>
+            </div>
+          </form>
+
+          <section id="starter-section" class="starter-section" aria-label="طرق البدء">
+            <div class="starter-heading">
+              <strong>أو اختر طريقة للبدء</strong>
+              <span>اختصارات آمنة</span>
+            </div>
+            <div class="feature-grid">
+              <button
+                class="feature-card"
+                data-task="افتح https://example.com واقرأ عنوان الصفحة"
+                type="button"
+              >
+                <span class="feature-icon link-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="m10 13 4-4" />
+                    <path
+                      d="M8.5 15.5 7 17a4 4 0 0 1-5.7-5.7l4-4A4 4 0 0 1 11 7"
+                    />
+                    <path
+                      d="m15.5 8.5 1.5-1.5a4 4 0 0 1 5.7 5.7l-4 4A4 4 0 0 1 13 17"
+                    />
+                  </svg>
+                </span>
+                <span class="feature-copy">
+                  <strong>ابدأ برابط</strong>
+                  <small>قراءة العنوان والنص الظاهر في صفحة عامة</small>
+                </span>
+                <span class="feature-arrow" aria-hidden="true">↗</span>
+              </button>
+              <button
+                class="feature-card"
+                data-task="ابحث عن وثائق Cloudflare Workers AI"
+                type="button"
+              >
+                <span class="feature-icon search-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="10.8" cy="10.8" r="6.8" />
+                    <path d="m16 16 5 5" />
+                  </svg>
+                </span>
+                <span class="feature-copy">
+                  <strong>اكتشف موضوعًا</strong>
+                  <small>استكشاف الويب العام، ثم مراجعة الخطة</small>
+                </span>
+                <span class="feature-arrow" aria-hidden="true">↗</span>
+              </button>
+              <section id="safety-card" class="feature-card safety-card">
+                <span class="feature-icon safety-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="m12 3 7 3v5c0 4.5-2.7 7.9-7 10-4.3-2.1-7-5.5-7-10V6l7-3Z"
+                    />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                </span>
+                <span class="feature-copy">
+                  <strong>حدود واضحة</strong>
+                  <small
+                    >لا تسجيل دخول أو نقر أو إرسال أو تعديل. تتوقف المهمة عند حد
+                    الاستخدام.</small
+                  >
+                </span>
+                <span class="safety-caption">خصوصية أولًا</span>
+              </section>
+            </div>
+          </section>
+          <section
+            id="business-section"
+            class="business-section"
+            aria-labelledby="business-title"
+            hidden
+          >
+            <div class="business-heading">
+              <div>
+                <span class="business-kicker">مسار دخل مبني على خبرتك</span>
+                <h2 id="business-title">حوّلي خبرة الطباعة إلى عرض قابل للبيع</h2>
+              </div>
+              <span class="business-badge">بحث موثق، لا وعود ربح</span>
+            </div>
+            <p class="business-lead">
+              من ملفاتك: تصميم ملابس أطفال ونوم، مع توزيع الطباعة ومواصفات الإنتاج.
+              مثال موثق: بيجامة أولاد شتاء 2026، مقاس 6–24 شهرًا، وطباعة مائية من 8
+              ألوان على البنطال.
+            </p>
+            <label class="business-market-label" for="business-market">
+              السوق الذي تريدين البيع فيه <span>(اختياري)</span>
+            </label>
+            <input
+              id="business-market"
+              class="business-market"
+              type="text"
+              maxlength="80"
+              placeholder="مثال: مصر، الخليج، علامات أطفال أوروبية"
+            />
+            <h3 class="business-group-title">مهارات AI للتصميم والطباعة</h3>
+            <div class="business-grid">
+              <button class="business-option" data-business-task="patterns" type="button">
+                <strong>نقوش متكررة وصياغة الأوامر</strong>
+                <span>قارني أدوات الـ seamless patterns وحقوق استخدامها، وابني prompt للألوان والخامة والطراز.</span>
+              </button>
+              <button class="business-option" data-business-task="mockups" type="button">
+                <strong>موك أب وعارضات افتراضية</strong>
+                <span>ابحثي عن عرض الملابس على نماذج متنوعة وحقوق الاستخدام التجاري للصور.</span>
+              </button>
+              <button class="business-option" data-business-task="print" type="button">
+                <strong>تجهيز التصميم للطباعة</strong>
+                <span>قارني التكبير الذكي وفصل الألوان والتفريغ، مع متطلبات الطباعة الفعلية.</span>
+              </button>
+              <button class="business-option" data-business-task="trends" type="button">
+                <strong>اتجاهات الألوان والطبعات</strong>
+                <span>حللي تقارير واتجاهات منشورة مع التاريخ والموسم، لا تخمينات عامة.</span>
+              </button>
+              <button class="business-option" data-business-task="personalization" type="button">
+                <strong>تخصيص تجربة المتجر</strong>
+                <span>ابحثي عن أدوات تخصيص المنتجات والتكامل والخصوصية دون ربط متجر فعلي.</span>
+              </button>
+            </div>
+            <h3 class="business-group-title">حوّلي المهارات إلى دخل</h3>
+            <div class="business-grid">
+              <button class="business-option" data-business-task="demand" type="button">
+                <strong>اختبري وجود طلب</strong>
+                <span>ابحثي عن احتياج العلامات لخدمات تصميم الطباعة ومواصفات الإنتاج.</span>
+              </button>
+              <button class="business-option" data-business-task="service" type="button">
+                <strong>حوّليها إلى خدمة</strong>
+                <span>ابني باقات خدمة واضحة، وقارني الأسعار المنشورة فقط.</span>
+              </button>
+              <button class="business-option" data-business-task="digital" type="button">
+                <strong>اختبري منتجًا رقميًا</strong>
+                <span>تحققي من طلب قوالب tech pack ومواضع الطباعة القابلة للبيع.</span>
+              </button>
+              <button class="business-option" data-business-task="leads" type="button">
+                <strong>اكتشفي عملاء محتملين</strong>
+                <span>اجمعي 3 علامات أو مصانع مناسبة وروابط صفحاتها العامة فقط.</span>
+              </button>
+            </div>
+            <p class="business-safety">
+              هذه المسارات تبحث وتقارن فقط؛ cela.sh لا يولّد صورًا ولا يكبّر أو يعدّل
+              ملفاتك. تحققي من حقوق الأدوات والأسعار الحالية قبل الشراء. لا تُرسل ملفات
+              تصميمك، ولا يتواصل النظام مع أي عميل أو ينشر شيئًا نيابة عنك.
+            </p>
+          </section>
+          <p id="safety-note" class="workspace-footer">
+            تُحفظ المحادثة في هذا المتصفح فقط. لا ينفّذ cela.sh تسجيل الدخول
+            للمواقع أو أي إجراء يغيّر بياناتها.
+          </p>
+        </section>
+      </main>
+    </div>
+    <div id="login-layer" class="overlay" hidden>
+      <form id="login-form" class="dialog">
+        <span class="login-mark" aria-hidden="true">C</span>
+        <span class="eyebrow">cela.sh</span>
+        <h2>أهلًا بك في مساحتك</h2>
+        <p>أدخل كلمة مرور الوصول التي أعدّها مالك الخدمة.</p>
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          maxlength="512"
+          required
+        />
+        <button class="primary" type="submit">دخول آمن</button>
+        <p id="login-error" class="bad" role="alert"></p>
+      </form>
+    </div>
+    <script type="module">
+      const thread = document.querySelector("#thread");
+      const form = document.querySelector("#composer");
+      const taskBox = document.querySelector("#task");
+      const sendButton = document.querySelector("#send");
+      const cancelButton = document.querySelector("#cancel-task");
+      const emptyState = document.querySelector("#empty-state");
+      const starterSection = document.querySelector("#starter-section");
+      const historyList = document.querySelector("#history-list");
+      const businessSection = document.querySelector("#business-section");
+      const activeTokens = new Map();
+      const STORAGE_KEY = "cela-sh-browser-history-v1";
+      const LEGACY_STORAGE_KEY = "manus-mini-browser-history-v1";
+      let busy = false;
+      let controller;
+      let messages = [];
+      try {
+        const currentHistory = localStorage.getItem(STORAGE_KEY);
+        const legacyHistory = currentHistory
+          ? null
+          : localStorage.getItem(LEGACY_STORAGE_KEY);
+        const saved = JSON.parse(currentHistory || legacyHistory || "[]");
+        if (Array.isArray(saved))
+          messages = saved
+            .filter(
+              (item) =>
+                item &&
+                ["user", "assistant"].includes(item.role) &&
+                typeof item.content === "string",
+            )
+            .slice(-40);
+        if (!currentHistory && legacyHistory)
+          localStorage.setItem(STORAGE_KEY, legacyHistory);
+      } catch {
+        messages = [];
+      }
+
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+      function persist() {
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(messages.slice(-40)),
+          );
+        } catch {}
+      }
+      function renderHistory() {
+        const recent = messages
+          .filter((item) => item.role === "user")
+          .slice(-6)
+          .reverse();
+        historyList.replaceChildren();
+        document.querySelector("#history-count").textContent = String(
+          recent.length,
+        ).padStart(2, "0");
+        document.querySelector("#history-empty").hidden = recent.length > 0;
+        for (const item of recent) {
+          const button = el("button", "history-item");
+          button.type = "button";
+          button.title = item.content;
+          const dot = el("span", "history-dot");
+          dot.setAttribute("aria-hidden", "true");
+          button.append(dot, el("span", "history-text", item.content));
+          button.addEventListener("click", () => {
+            taskBox.value = item.content;
+            taskBox.focus();
+          });
+          historyList.append(button);
+        }
+      }
+      function setBusy(value, stopped = false) {
+        busy = value;
+        sendButton.disabled = value;
+        sendButton.textContent = value ? "…" : "↑";
+        cancelButton.hidden = !value;
+        cancelButton.disabled = false;
+        cancelButton.textContent = "إيقاف المهمة";
+        document.querySelector("#service-pill").textContent = value
+          ? "المهمة قيد التنفيذ"
+          : stopped
+            ? "توقفت المهمة"
+            : "الخدمة جاهزة";
+        document.querySelector("#service-pill").className =
+          `service-pill${stopped ? " offline" : ""}`;
+      }
+      function render() {
+        thread.replaceChildren();
+        emptyState.hidden = messages.length > 0;
+        starterSection.hidden = messages.length > 0;
+        renderHistory();
+        for (const message of messages) {
+          const card = el("article", `message ${message.role}`);
+          card.append(
+            el("div", "label", message.role === "user" ? "أنت" : "cela.sh"),
+          );
+          card.append(el("div", "content", message.content || "جارٍ العمل..."));
+          if (message.plan) {
+            const plan = el("section", "plan");
+            plan.append(el("h3", "", "خطة مقترحة للمراجعة"));
+            plan.append(el("p", "", message.plan.analysis));
+            plan.append(
+              el(
+                "p",
+                "meta",
+                message.plan.action === "search"
+                  ? `بحث على الويب: ${message.plan.query}`
+                  : `عدد الصفحات: ${(message.plan.urls || [message.plan.url]).length}`,
+              ),
+            );
+            const plannedUrls = Array.isArray(message.plan.urls)
+              ? message.plan.urls
+              : [message.plan.url].filter(Boolean);
+            if (plannedUrls.filter(Boolean).length > 1) {
+              const links = el("ul", "planned-sources");
+              for (const url of plannedUrls) {
+                const safeUrl = publicHttpsUrl(url);
+                if (!safeUrl) continue;
+                const item = el("li");
+                const link = el("a", "", safeUrl);
+                link.href = safeUrl;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                item.append(link);
+                links.append(item);
+              }
+              plan.append(links);
+            }
+            plan.append(el("p", "meta", `السبب: ${message.plan.reason}`));
+            plan.append(
+              el(
+                "p",
+                "meta",
+                "التنفيذ المسموح: فتح صفحة عامة وقراءة النص فقط.",
+              ),
+            );
+            const row = el("div", "action-row");
+            let approved = false;
+            if (message.plan.requiresConfirmation) {
+              const label = el("label", "confirm-line");
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.addEventListener("change", () => {
+                approved = checkbox.checked;
+                button.disabled = !approved || busy;
+              });
+              label.append(
+                checkbox,
+                el(
+                  "span",
+                  "",
+                  "أؤكد أن التنفيذ للقراءة العامة فقط، دون إرسال أو تغيير.",
+                ),
+              );
+              plan.append(label);
+            }
+            const button = el(
+              "button",
+              "primary",
+              activeTokens.has(message.id)
+                ? "راجع ثم نفّذ القراءة"
+                : "انتهت صلاحية الخطة؛ أنشئ خطة جديدة",
+            );
+            button.type = "button";
+            button.disabled =
+              !activeTokens.has(message.id) ||
+              busy ||
+              (message.plan.requiresConfirmation && !approved);
+            button.addEventListener("click", () =>
+              runPlan(message.id, button, approved),
+            );
+            row.append(button);
+            plan.append(row);
+            card.append(plan);
+          }
+          if (message.result) {
+            const result = el("section", "result");
+            result.append(el("h3", "", "النتيجة"));
+            result.append(
+              el(
+                "p",
+                "",
+                message.result.answer ||
+                  message.result.error ||
+                  "انتهت المهمة دون ملخص.",
+              ),
+            );
+            const sources = Array.isArray(message.result.sources)
+              ? message.result.sources
+              : message.result.evidence
+                ? [message.result.evidence]
+                : [];
+            if (sources.length) {
+              const sourceSection = el("section", "source-section");
+              sourceSection.append(
+                el("h4", "", `المصادر (${sources.length})`),
+              );
+              const sourceList = el("ol", "source-list");
+              for (const source of sources) {
+                const item = el("li", "source-item");
+                item.append(
+                  el("strong", "", source.title || "صفحة عامة"),
+                );
+                const safeUrl = publicHttpsUrl(source.url);
+                if (safeUrl) {
+                  const link = el("a", "source-link", safeUrl);
+                  link.href = safeUrl;
+                  link.target = "_blank";
+                  link.rel = "noopener noreferrer";
+                  item.append(link);
+                }
+                const accessedAt = formatAccessedAt(source.accessedAt);
+                if (accessedAt)
+                  item.append(
+                    el("small", "source-date", `وقت الاطلاع: ${accessedAt}`),
+                  );
+                if (source.excerpt)
+                  item.append(el("blockquote", "", source.excerpt));
+                sourceList.append(item);
+              }
+              sourceSection.append(sourceList);
+              result.append(sourceSection);
+            }
+            if (Array.isArray(message.result.steps)) {
+              const list = el("ol", "steps");
+              for (const step of message.result.steps)
+                list.append(el("li", "", step));
+              result.append(list);
+            }
+            if (message.result.evidence?.reservedBrowserMs)
+              result.append(
+                el(
+                  "p",
+                  "meta",
+                  `الميزانية المحجوزة للمحاولة: حتى ${Math.round(message.result.evidence.reservedBrowserMs / 1000)} ثانية (حد محافظ، ليس قياسًا فعليًا)`,
+                ),
+              );
+            const downloads = el("div", "report-downloads");
+            for (const [format, label] of [
+              ["html", "تنزيل HTML"],
+              ["md", "تنزيل Markdown"],
+              ["csv", "تنزيل CSV"],
+            ]) {
+              const button = el("button", "secondary-button", label);
+              button.type = "button";
+              button.addEventListener("click", () =>
+                downloadReport(message, format),
+              );
+              downloads.append(button);
+            }
+            result.append(downloads);
+            card.append(result);
+          }
+          thread.append(card);
+        }
+        thread.scrollTop = thread.scrollHeight;
+        persist();
+      }
+      function setActiveNav(id) {
+        document.querySelectorAll(".nav-item").forEach((item) => {
+          item.classList.toggle("active", item.id === id);
+        });
+      }
+      function businessTask(kind) {
+        const market = document.querySelector("#business-market").value.trim();
+        const marketScope = market
+          ? `في سوق ${market}`
+          : "مع مقارنة نتائج عربية وإنجليزية دون افتراض بلد محدد";
+        const tasks = {
+          patterns: `ابحث ${marketScope} في الأدوات التي تساعد مصممي المنسوجات على إنشاء seamless patterns قابلة للتكرار وصياغة prompts دقيقة للخامة والألوان والطراز. قارن Midjourney وPatternedAI كأمثلة قدمتها صاحبة المشروع، وتحقق من المصادر الرسمية الحالية لحقوق الاستخدام التجاري والتصدير والتكلفة. اقترح prompt أصليًا قابلًا للتعديل بطابع مائي أو بوهيمي أو فيكتوري دون تقليد فنان أو عمل محمي. أرفق حتى 3 مصادر، ولا تدّع أن cela.sh أنشأ الصورة.`,
+          mockups: `ابحث ${marketScope} عن أدوات موك أب أزياء تعرض الطبعات على الملابس، ومنها Verve AI وBotika وPhotoshop Generative Fill كأمثلة قدمتها صاحبة المشروع. تحقق من الصفحات الرسمية وحقوق الاستخدام التجاري، ودقة تثبيت الطباعة وتنوع المقاسات ودرجات البشرة. لأن المجال ملابس أطفال، وضّح سياسات الصور والبدائل الآمنة مثل موك أب الملابس المسطحة أو المانيكان. لا ترفع أي تصميم ولا تنشئ صورة.`,
+          print: `ابحث ${marketScope} عن أدوات تكبير وتجهيز رسومات المنسوجات للطباعة، ومنها Topaz Gigapixel AI وVanceAI كأمثلة قدمتها صاحبة المشروع، إضافة إلى إزالة الخلفية وفصل الألوان للطباعة DTG أو التسامي. تحقق من المصادر الرسمية والتكلفة وحقوق الملفات. وضّح أن 4K وحدها لا تضمن جاهزية الطباعة: يلزم فحص حجم الطباعة الفعلي وPPI وملف اللون ومتطلبات المطبعة. لا تعدّل الملفات؛ قدّم قائمة فحص بمصادر.`,
+          trends: `ابحث ${marketScope} عن اتجاهات حديثة وموثقة لألوان وطبعات ملابس الأطفال والنوم للموسم القادم. استخدم تقارير عامة وصفحات منشورة يمكن فتحها، واذكر تاريخ النشر والموسم والمنطقة لكل اتجاه. افصل بين رصد محتوى منشور وبين بيانات الطلب أو المبيعات؛ لا تدّع تحليلًا مباشرًا لمنصات التواصل ولا تخترع تنبؤًا. أرفق حتى 3 مصادر.`,
+          personalization: `ابحث ${marketScope} عن أدوات تخصيص تجربة شراء الملابس أو تخصيص الطبعات في المتاجر الإلكترونية. قارن خيارات منشورة وتكلفة الاشتراك والتكاملات المدعومة إن وُجدت في مصادر رسمية، واذكر متطلبات الخصوصية وموافقة العميل والبيانات اللازمة. لا تدخل إلى متجر أو حساب، ولا تربط خدمة فعلية أو تستخدم بيانات مشترين. اقترح تجربة أولية صغيرة مع مصادر.`,
+          demand: `ابحث عن دلائل الطلب ${marketScope} على خدمات تصميم طبعات ومواضعها وتجهيز مواصفات الإنتاج لعلامات ملابس الأطفال والنوم. استخدم حتى 3 مصادر عامة، وميّز الدليل عن الاستنتاج، وأرفق الروابط. لا تدّع وجود طلب مؤكد إن لم تثبته المصادر.`,
+          service: `ابحث ${marketScope} عن خدمات مشابهة لتصميم طبعات ملابس الأطفال وتجهيز ملفات مواضع الطباعة ومواصفات الإنتاج. اقترح 3 باقات خدمة قابلة للبيع مبنية على خبرتي، واعرض السعر فقط إذا كان منشورًا في مصدر عام موثوق؛ اكتب «لم أجد سعرًا موثقًا» بدل التخمين. أرفق حتى 3 روابط واذكر ما يحتاج اختبارًا.`,
+          digital: `تحقق ${marketScope} من وجود منتجات رقمية مشابهة لقوالب tech pack ومواضع طباعة ملابس الأطفال. اعرض أمثلة وأسعارًا منشورة إن وجدت، واقترح منتجًا رقميًا صغيرًا للاختبار مع مصدر لكل ادعاء. لا تخترع حجم الطلب أو السعر.`,
+          leads: `ابحث ${marketScope} عن 3 علامات تجارية أو مصانع ملابس أطفال ونوم قد تحتاج تصميم طبعات وملفات مواصفات إنتاج. استخدم صفحات الشركات العامة للتحقق من ملاءمة كل جهة، وأرفق رابط الموقع وصفحة التواصل الرسمية فقط. لا تجمع بيانات شخصية ولا ترسل أي رسالة.`,
+        };
+        return tasks[kind] || "";
+      }
+      document.querySelectorAll("[data-business-task]").forEach((button) => {
+        button.addEventListener("click", () => {
+          taskBox.value = businessTask(button.dataset.businessTask);
+          businessSection.hidden = true;
+          setActiveNav("new-task-nav");
+          document
+            .querySelector("#composer")
+            .scrollIntoView({ behavior: "smooth", block: "center" });
+          taskBox.focus();
+        });
+      });
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, (character) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[character],
+        );
+      }
+      function publicHttpsUrl(value) {
+        try {
+          const url = new URL(value);
+          return url.protocol === "https:" ? url.href : "";
+        } catch {
+          return "";
+        }
+      }
+      function formatAccessedAt(value) {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+          ? ""
+          : `${date.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "")} UTC`;
+      }
+      function markdownText(value) {
+        return String(value ?? "")
+          .replace(/[\r\n]+/g, " ")
+          .replace(/[\\`*_{}\[\]()#+.!|<>]/g, "\\$&");
+      }
+      function markdownQuote(value) {
+        return String(value ?? "")
+          .split(/\r?\n/)
+          .map((line) => `> ${markdownText(line)}`)
+          .join("\n");
+      }
+      function csvCell(value) {
+        let text = String(value ?? "");
+        if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+        return `"${text.replaceAll('"', '""')}"`;
+      }
+      function downloadReport(message, format) {
+        const sources = Array.isArray(message.result.sources)
+          ? message.result.sources
+          : message.result.evidence
+            ? [message.result.evidence]
+            : [];
+        const answer =
+          message.result.answer ||
+          message.result.error ||
+          "انتهت المهمة دون ملخص.";
+        let content;
+        let mime;
+        if (format === "md") {
+          const lines = [
+            `# ${markdownText(message.task || "تقرير قراءة")}`,
+            "",
+            `Cela.sh · ${new Date().toISOString().slice(0, 10)} UTC`,
+            "",
+            "## النتيجة",
+            "",
+            markdownQuote(answer),
+            "",
+            "## المصادر",
+          ];
+          for (const [index, source] of sources.entries()) {
+            const url = publicHttpsUrl(source.url);
+            lines.push(
+              "",
+              `### [${index + 1}] ${markdownText(source.title || "صفحة عامة")}`,
+            );
+            if (url) lines.push(`Source: ${url}`);
+            const accessedAt = formatAccessedAt(source.accessedAt);
+            if (accessedAt) lines.push(`وقت الاطلاع: ${accessedAt}`);
+            if (source.excerpt) lines.push("", markdownQuote(source.excerpt));
+          }
+          if (Array.isArray(message.result.steps))
+            lines.push(
+              "",
+              "## خطوات التنفيذ",
+              "",
+              ...message.result.steps.map(
+                (step, index) => `${index + 1}. ${markdownText(step)}`,
+              ),
+            );
+          content = lines.join("\n");
+          mime = "text/markdown;charset=utf-8";
+        } else if (format === "csv") {
+          const rows = [
+            ["type", "label", "title", "url", "accessed_at", "text"],
+            ["summary", "", message.task || "", "", "", answer],
+            ...sources.map((source, index) => [
+              "source",
+              `[${index + 1}]`,
+              source.title || "صفحة عامة",
+              publicHttpsUrl(source.url),
+              formatAccessedAt(source.accessedAt),
+              source.excerpt || "",
+            ]),
+            ...(Array.isArray(message.result.steps)
+              ? message.result.steps.map((step, index) => [
+                  "step",
+                  String(index + 1),
+                  "",
+                  "",
+                  "",
+                  step,
+                ])
+              : []),
+          ];
+          content = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
+          mime = "text/csv;charset=utf-8";
+        } else {
+          const sourceMarkup = sources
+            .map((source, index) => {
+              const url = publicHttpsUrl(source.url);
+              const link = url
+                ? `<a href="${escapeHtml(url)}">${escapeHtml(url)}</a>`
+                : "";
+              const accessedAt = formatAccessedAt(source.accessedAt);
+              return `<li><h3>[${index + 1}] ${escapeHtml(source.title || "صفحة عامة")}</h3>${link}${accessedAt ? `<p>وقت الاطلاع: ${escapeHtml(accessedAt)}</p>` : ""}<blockquote>${escapeHtml(source.excerpt || "")}</blockquote></li>`;
+            })
+            .join("");
+          const steps = Array.isArray(message.result.steps)
+            ? `<h2>خطوات التنفيذ</h2><ol>${message.result.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`
+            : "";
+          content = `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(message.task || "تقرير cela.sh")}</title><style>body{max-width:820px;margin:40px auto;padding:0 20px;font:16px/1.8 system-ui,sans-serif;color:#203129}h1{font-size:28px}h2{margin-top:32px}a{color:#5558e8;overflow-wrap:anywhere}li{margin:14px 0}main>p{white-space:pre-wrap}blockquote{margin:8px 0;padding:12px;border-right:3px solid #b7c89b;background:#f5f7f1;white-space:pre-wrap}</style><main><p>cela.sh · تقرير قراءة للويب العام · ${new Date().toISOString().slice(0, 10)}</p><h1>${escapeHtml(message.task || "تقرير قراءة")}</h1><h2>النتيجة</h2><p>${escapeHtml(answer)}</p>${steps}<h2>المصادر (${sources.length})</h2><ol>${sourceMarkup}</ol></main></html>`;
+          mime = "text/html;charset=utf-8";
+        }
+        const blob = new Blob([content], { type: mime });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = `cela-report-${new Date().toISOString().slice(0, 10)}.${format}`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000);
+      }
+      async function requestJson(path, payload, signal) {
+        const response = await fetch(path, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+          signal,
+          credentials: "same-origin",
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.status === 401)
+          document.querySelector("#login-layer").hidden = false;
+        if (!response.ok)
+          throw new Error(
+            result.error || `تعذر إكمال الطلب (${response.status}).`,
+          );
+        return result;
+      }
+      async function makePlan(value) {
+        if (busy) return;
+        const task = value.trim();
+        if (!task) return;
+        messages.push({ id: crypto.randomUUID(), role: "user", content: task });
+        const assistant = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "",
+          task,
+        };
+        messages.push(assistant);
+        taskBox.value = "";
+        setBusy(true);
+        render();
+        controller = new AbortController();
+        try {
+          const data = await requestJson(
+            "/api/plan",
+            { task },
+            controller.signal,
+          );
+          assistant.content = "راجع الخطة أدناه. لن يبدأ المتصفح تلقائيًا.";
+          assistant.plan = data.plan;
+          activeTokens.set(assistant.id, data.planToken);
+          document.querySelector("#model").textContent =
+            data.planner ||
+            (data.provider === "nvidia"
+              ? `NVIDIA NIM · ${data.model}`
+              : data.model || "غير متاح");
+        } catch (error) {
+          assistant.content =
+            error.name === "AbortError"
+              ? "أوقفت المهمة بناءً على طلبك."
+              : error.message || "تعذر إنشاء الخطة.";
+          assistant.error = true;
+        } finally {
+          controller = null;
+          setBusy(false, Boolean(assistant.error));
+          render();
+        }
+      }
+      async function runPlan(id, button, confirmed) {
+        const token = activeTokens.get(id);
+        if (!token || busy) return;
+        const message = messages.find((item) => item.id === id);
+        if (!message) return;
+        setBusy(true);
+        button.disabled = true;
+        message.content = "المتصفح يفتح الصفحة العامة ويقرأها الآن.";
+        render();
+        controller = new AbortController();
+        try {
+          const result = await requestJson(
+            "/api/execute",
+            { planToken: token, confirmed },
+            controller.signal,
+          );
+          message.result = result;
+          activeTokens.delete(id);
+          document.querySelector("#model").textContent =
+            result.provider === "nvidia"
+              ? `NVIDIA NIM · ${result.model}`
+              : result.model || "Workers AI";
+        } catch (error) {
+          message.result = {
+            error:
+              error.name === "AbortError"
+                ? "أُوقفت المهمة بناءً على طلبك وأُغلقت جلسة المتصفح. يبقى الحجز الداخلي لدقيقتين محسوبًا ضمن حد اليوم، وليس قياسًا للمدة الفعلية."
+                : error.message || "تعذر تنفيذ المهمة بأمان.",
+          };
+        } finally {
+          controller = null;
+          setBusy(false, Boolean(message.result?.error));
+          render();
+        }
+      }
+      cancelButton.addEventListener("click", () => {
+        if (!controller) return;
+        cancelButton.disabled = true;
+        cancelButton.textContent = "جارٍ الإيقاف…";
+        controller.abort();
+      });
+      document.querySelector("#new-task-nav").addEventListener("click", () => {
+        businessSection.hidden = true;
+        setActiveNav("new-task-nav");
+        document
+          .querySelector("#composer")
+          .scrollIntoView({ behavior: "smooth", block: "center" });
+        taskBox.focus();
+      });
+      document.querySelector("#history-nav").addEventListener("click", () => {
+        businessSection.hidden = true;
+        setActiveNav("history-nav");
+        document
+          .querySelector("#recent-section")
+          .scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      document.querySelector("#safety-nav").addEventListener("click", () => {
+        businessSection.hidden = true;
+        setActiveNav("safety-nav");
+        document
+          .querySelector("#safety-note")
+          .scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      document.querySelector("#business-nav").addEventListener("click", () => {
+        setActiveNav("business-nav");
+        businessSection.hidden = false;
+        businessSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      document.querySelectorAll("[data-task]").forEach((button) => {
+        button.addEventListener("click", () => {
+          taskBox.value = button.dataset.task;
+          taskBox.focus();
+        });
+      });
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        makePlan(taskBox.value);
+      });
+      document
+        .querySelector("#login-form")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const error = document.querySelector("#login-error");
+          error.textContent = "";
+          try {
+            await requestJson("/api/login", {
+              password: document.querySelector("#password").value,
+            });
+            document.querySelector("#password").value = "";
+            document.querySelector("#login-layer").hidden = true;
+            document.querySelector("#logout").hidden = false;
+          } catch (failure) {
+            error.textContent = failure.message;
+          }
+        });
+      document.querySelector("#logout").addEventListener("click", async () => {
+        try {
+          await requestJson("/api/logout", {});
+        } finally {
+          location.reload();
+        }
+      });
+      async function initialize() {
+        render();
+        try {
+          const status = await fetch("/api/status", { cache: "no-store" }).then(
+            (response) => response.json(),
+          );
+          document.querySelector("#model").textContent =
+            status.provider === "nvidia"
+              ? `NVIDIA NIM · ${status.model}`
+              : status.model || "غير متاح";
+          const pill = document.querySelector("#service-pill");
+          pill.textContent = status.configured
+            ? "الخدمات مهيأة"
+            : "الإعداد ناقص";
+          pill.className = `service-pill${status.configured ? "" : " offline"}`;
+          if (!status.configured) {
+            const notice = document.querySelector("#config");
+            notice.hidden = false;
+            notice.textContent =
+              "أضف إعدادات الأسرار والربط قبل الاستخدام. لا تُرسل أي مهمة الآن.";
+          }
+          const session = await fetch("/api/session", {
+            cache: "no-store",
+          }).then((response) => response.json());
+          if (session.authenticated)
+            document.querySelector("#logout").hidden = false;
+          else document.querySelector("#login-layer").hidden = false;
+        } catch {
+          document.querySelector("#service-pill").textContent =
+            "الخدمة غير متاحة";
+          document.querySelector("#config").hidden = false;
+          document.querySelector("#config").textContent =
+            "تعذر فحص الخدمات. لم يبدأ أي تنفيذ.";
+        }
+      }
+      render();
+      initialize();
+    </script>
+  </body>
+</html>
