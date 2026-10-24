@@ -415,7 +415,11 @@ describe("Cela.sh read-only agent Worker", () => {
     const { env, calls } = createEnvironment();
     const cookie = await login(env);
     const response = await worker.fetch(
-      post("/api/plan", { task: "Please don’t open https://example.com" }, cookie),
+      post(
+        "/api/plan",
+        { task: "Please don’t open https://example.com" },
+        cookie,
+      ),
       env,
     );
     const value = await response.json();
@@ -536,12 +540,7 @@ describe("Cela.sh read-only agent Worker", () => {
           env,
         ),
       ["2606:4700:4700::1111"],
-      [
-        "html.duckduckgo.com",
-        "example.com",
-        "example.org",
-        "www.iana.org",
-      ],
+      ["html.duckduckgo.com", "example.com", "example.org", "www.iana.org"],
     );
     const result = await response.json();
 

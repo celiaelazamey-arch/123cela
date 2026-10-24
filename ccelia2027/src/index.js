@@ -688,7 +688,10 @@ async function createPlan(request, env) {
   if (!task || task.length > MAX_TASK_LENGTH)
     return json({ error: `اكتب مهمة بين 1 و${MAX_TASK_LENGTH} حرف.` }, 400);
   if ([...task.matchAll(/https:\/\/[^\s<>"'`]+/gi)].length > MAX_SOURCES)
-    return json({ error: `يمكن قراءة حتى ${MAX_SOURCES} روابط في المهمة الواحدة.` }, 400);
+    return json(
+      { error: `يمكن قراءة حتى ${MAX_SOURCES} روابط في المهمة الواحدة.` },
+      400,
+    );
   const settings = modelSettings(env);
   const directPlan = directUrlReadPlan(task);
   if (!directPlan && !(await reserveBudget(env, "ai")))
@@ -881,7 +884,10 @@ async function readPublicPages(binding, plan, signal, launchBrowser) {
     let targets = plan.urls || [];
     if (plan.action === "search") {
       await withinDeadline(
-        page.goto(initialUrl, { waitUntil: "domcontentloaded", timeout: 8_000 }),
+        page.goto(initialUrl, {
+          waitUntil: "domcontentloaded",
+          timeout: 8_000,
+        }),
       );
       const links = await withinDeadline(
         page
