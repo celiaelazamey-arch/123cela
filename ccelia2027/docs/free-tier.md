@@ -1,0 +1,29 @@
+# Free-Tier Limits
+
+Facts checked against Cloudflare's official documentation on 2026-10-09. Free quotas fail closed at their limit; on Workers Paid, usage above included allowances can be billed. The account plan therefore matters as much as the code.
+
+| Service                |                                                                                                   Documented Free allowance |                                                                                                                  App's internal reservation |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------: |
+| Workers                |                                                          100,000 requests/day; static asset requests are free and unlimited |                                                                                          Application budget blocks agent calls much earlier |
+| Workers AI             |                                                              10,000 Neurons/day; over-limit operations fail on Workers Free |                                                               28 calls/day × 350 reserved Neurons = 9,800 Neurons of the 10,000/day ceiling |
+| NVIDIA NIM             |                             Developer API access is for prototyping, development, and testing; limits vary by model/account |                                                                              Local opt-in; manual smoke test makes one request per dispatch |
+| Browser Run            | 10 browser minutes/day; 3 concurrent Browser Sessions; 1 new session every 20 seconds; 60-second default inactivity timeout | 5 session reservations/day × 120 seconds = 600,000 ms worst-case; the full 2 minutes stays reserved even if the session ends early or fails |
+| SQLite Durable Objects |                                                                    100,000 requests/day and 13,000 GB-s/day on Workers Free |                                                                       One small global counter object; at most 38 reserve/release calls/day |
+
+For model-planned tasks and page summaries, the production/default model is `@cf/meta/llama-3.2-3b-instruct`. Clear requests to read one to three explicit HTTPS URLs skip the planner-AI call but still use the selected provider for the page summary. Public web search reads no more than three DNS-validated results and uses one Browser Run session for the search and sources. Each source records its read timestamp. Completed results can be downloaded as HTML, Markdown, or CSV; these exports are generated in the user's browser and do not add Worker requests. The interface can cancel a run; cancellation closes the session and releases its concurrency slot, but does not refund the app's reserved 120,000 ms daily allowance. This reservation is a conservative internal cap, not a measurement of actual provider usage. NVIDIA NIM is an opt-in local-development provider; NVIDIA's free developer access is for prototyping, development, and testing, with limits that vary by model and account. A separate manual GitHub Actions smoke test sends one fixed synthetic prompt per dispatch, suppresses the response body, and never deploys the Worker. The app's 28-call daily ceiling also applies to local NIM use, but is only an app-side cap and does not measure NVIDIA quota or guarantee that a provider's limits will not be reached. Quota errors fail closed without a fallback. No NVIDIA key is configured in the Cloudflare deployment.
+
+Internal AI Neuron values are estimates, not exact metering. Actual consumption remains subject to Cloudflare's meter and Free-account hard stop. The Worker uses Cloudflare's `@cloudflare/playwright` package to launch one short-lived Browser Session per task and explicitly closes both its context and browser. Before reserving a session, the Worker resolves the target through Cloudflare DNS-over-HTTPS and rejects it unless every A answer is public IPv4 and every AAAA answer is public IPv6. Playwright permits only HTTPS requests to the exact target origin using GET or HEAD; downloads, service workers, scripts, images, media, and fonts are disabled or blocked. Navigation is limited to 12 seconds, text extraction to 5 seconds, and the whole Worker-side browser task to 45 seconds. Since Browser Run sessions normally close after 60 seconds of inactivity if explicit closure fails, the internal budget reserves 120 seconds per attempt; the UI reports this reserved maximum, not a measured Browser Run duration.
+
+The internal counter cannot detect whether an account has secretly been upgraded to Workers Paid. Do not dispatch deployment unless the Cloudflare dashboard confirms Free and no payment/billing setup. If the plan or billing state is uncertain, status is BLOCKED.
+
+## Official Sources
+
+- [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/)
+- [Workers AI pricing and free allocation](https://developers.cloudflare.com/workers-ai/platform/pricing/)
+- [Selected model](https://developers.cloudflare.com/workers-ai/models/llama-3.2-3b-instruct/)
+- [NVIDIA NIM product and developer access](https://docs.api.nvidia.com/nim/docs/product)
+- [NVIDIA NIM API quickstart](https://docs.api.nvidia.com/nim/docs/api-quickstart)
+- [Browser Run pricing](https://developers.cloudflare.com/browser-run/pricing/)
+- [Browser Run limits](https://developers.cloudflare.com/browser-run/limits/)
+- [Browser Run Playwright sessions](https://developers.cloudflare.com/browser-run/playwright/)
+- [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/)
