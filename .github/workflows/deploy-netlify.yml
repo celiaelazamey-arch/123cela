@@ -1,0 +1,66 @@
+name: Deploy manus-mini to Netlify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "manus-mini/**"
+      - ".github/workflows/deploy-netlify.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netlify-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || vars.NETLIFY_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: manus-mini
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13"
+          cache: npm
+          cache-dependency-path: manus-mini/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Check deployment secrets
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          APP_ACCESS_PASSWORD: ${{ secrets.APP_ACCESS_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          for name in NETLIFY_AUTH_TOKEN NETLIFY_SITE_ID GROQ_API_KEY APP_ACCESS_PASSWORD SESSION_SECRET; do
+            if [[ -z "${!name}" ]]; then
+              printf '::error title=Missing GitHub Actions secret::Add %s before deploying.\n' "$name"
+              exit 1
+            fi
+          done
+      - name: Install Netlify CLI
+        run: npm install --no-save --no-package-lock netlify-cli@27.14.2
+      - name: Set production function variables
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          APP_ACCESS_PASSWORD: ${{ secrets.APP_ACCESS_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          npx netlify env:set AI_PROVIDER groq --context production --scope functions
+          npx netlify env:set GROQ_API_KEY "$GROQ_API_KEY" --context production --scope functions --secret
+          npx netlify env:set APP_ACCESS_PASSWORD "$APP_ACCESS_PASSWORD" --context production --scope functions --secret
+          npx netlify env:set SESSION_SECRET "$SESSION_SECRET" --context production --scope functions --secret
+      - name: Build and deploy production site
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx netlify deploy --build --prod --message "GitHub Actions ${GITHUB_SHA}"
