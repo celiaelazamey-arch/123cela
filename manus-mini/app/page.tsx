@@ -244,7 +244,7 @@ export default function Home() {
     setFileText("");
     setFileName("");
     const taskId = crypto.randomUUID();
-    setActivity((list) => [{ id: taskId, title: mode === "research" ? `بحث: ${message.slice(0, 48)}` : message.slice(0, 56), status: "running" as const, time: Date.now() }, ...list].slice(0, 30));
+    setActivity((list) => [{ id: taskId, title: message.slice(0, 56), status: "running" as const, time: Date.now() }, ...list].slice(0, 30));
     setBusy(true);
     const abort = new AbortController();
     controller.current = abort;

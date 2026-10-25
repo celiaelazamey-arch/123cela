@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return `${item.role === "user" ? "المستخدم" : "المساعد"}: ${item.content.slice(-4000)}`;
   }).filter(Boolean).join("\n").slice(-30000) : "";
   const sourceItems = Array.isArray(body?.sources) ? body.sources.slice(0, 3) : [];
-  const sources = sourceItems.map((item: { title?: unknown; url?: unknown; snippet?: unknown }) => {
+  const sources = sourceItems.map((item: { title?: unknown; url?: unknown; snippet?: unknown; excerpt?: unknown }) => {
     const title = typeof item?.title === "string" ? item.title.slice(0, 250) : "";
     const url = typeof item?.url === "string" && /^https:\/\//.test(item.url) ? item.url.slice(0, 1000) : "";
     const snippet = typeof item?.snippet === "string" ? item.snippet.slice(0, 700) : "";
