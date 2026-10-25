@@ -7,6 +7,8 @@ type Source = { title: string; url: string; snippet: string };
 type Project = { id: string; name: string; memory: string; messages: Message[]; updatedAt: number };
 type Activity = { id: string; title: string; status: "running" | "done" | "stopped" | "error"; time: number };
 type ServerStatus = { provider: string; model: string; configured: boolean; databaseEnabled: boolean; authRequired: boolean; authorized: boolean; setupRequired: boolean };
+type ResearchPlan = { projectId: string; query: string; token: string; steps: string[]; candidates: Source[]; history: { role: "user" | "assistant"; content: string }[]; attachedText: string; attachedName: string };
+type ReadSource = Source & { excerpt: string; accessedAt: string };
 
 function isWorkspaceData(value: unknown): value is { projects: Project[]; activity: Activity[] } {
   if (!value || typeof value !== "object") return false;
@@ -48,6 +50,7 @@ export default function Home() {
   const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [researchPlan, setResearchPlan] = useState<ResearchPlan | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -131,7 +134,7 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [projects, activity, ready, status?.databaseEnabled, authenticated, cloudLoaded]);
 
-  useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [project?.messages.length]);
+  useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [project?.messages.length, project?.messages.at(-1)?.content]);
 
   function updateProject(id: string, change: (current: Project) => Project) {
     setProjects((list) => list.map((item) => item.id === id ? change(item) : item));
@@ -143,6 +146,39 @@ export default function Home() {
 
   function updateMessage(projectId: string, messageId: string, change: (message: Message) => Message) {
     updateProject(projectId, (current) => ({ ...current, messages: current.messages.map((message) => message.id === messageId ? change(message) : message), updatedAt: Date.now() }));
+  }
+
+  async function prepareResearch(message: string) {
+    if (!project) return;
+    const projectId = project.id;
+    const taskId = crypto.randomUUID();
+    setActivity((list) => [{ id: taskId, title: `إعداد خطة بحث: ${message.slice(0, 42)}`, status: "running" as const, time: Date.now() }, ...list].slice(0, 30));
+    setBusy(true);
+    const abort = new AbortController();
+    controller.current = abort;
+    try {
+      const response = await fetch("/api/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "plan", query: message }), signal: abort.signal });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "تعذر إعداد خطة البحث.");
+      setResearchPlan({
+        projectId,
+        query: result.query,
+        token: result.token,
+        steps: result.steps,
+        candidates: result.candidates || [],
+        history: project.messages.slice(-16).map(({ role, content }) => ({ role, content })),
+        attachedText: fileText,
+        attachedName: fileName,
+      });
+      setActivity((list) => list.map((item) => item.id === taskId ? { ...item, status: "done" } : item));
+    } catch (error) {
+      const stopped = abort.signal.aborted;
+      setActivity((list) => list.map((item) => item.id === taskId ? { ...item, status: stopped ? "stopped" : "error" } : item));
+      if (!stopped) window.alert(error instanceof Error ? error.message : "تعذر إعداد خطة البحث.");
+    } finally {
+      setBusy(false);
+      controller.current = null;
+    }
   }
 
   function newProject() {
@@ -194,6 +230,7 @@ export default function Home() {
     const message = value.trim();
     if (!message || busy || !project) return;
     if (sensitiveRequest.test(message) && !approved) { setConfirmText(message); return; }
+    if (mode === "research") { await prepareResearch(message); return; }
 
     const projectId = project.id;
     const userMessage: Message = { id: crypto.randomUUID(), role: "user", content: message, createdAt: Date.now() };
@@ -213,18 +250,10 @@ export default function Home() {
     controller.current = abort;
 
     try {
-      let sources: Source[] = [];
-      if (mode === "research") {
-        const search = await fetch("/api/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: message }), signal: abort.signal });
-        const result = await search.json();
-        sources = result.results || [];
-        if (!search.ok && !sources.length) throw new Error(result.error || "تعذر البحث عبر الإنترنت.");
-      }
-      updateMessage(projectId, answer.id, (item) => ({ ...item, sources }));
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, memory: project.memory, history: project.messages.slice(-16).map(({ role, content }) => ({ role, content })), fileText: attachedText ? `الملف ${attachedName}:\n${attachedText}` : "", sources }),
+        body: JSON.stringify({ message, memory: project.memory, history: project.messages.slice(-16).map(({ role, content }) => ({ role, content })), fileText: attachedText ? `الملف ${attachedName}:\n${attachedText}` : "" }),
         signal: abort.signal,
       });
       if (!response.ok) {
@@ -266,6 +295,120 @@ export default function Home() {
     }
   }
 
+  async function runApprovedResearch() {
+    const plan = researchPlan;
+    const target = projects.find((item) => item.id === plan?.projectId);
+    if (!plan || !target || busy) return;
+    setResearchPlan(null);
+    const userMessage: Message = { id: crypto.randomUUID(), role: "user", content: plan.query, createdAt: Date.now() };
+    const answer: Message = { id: crypto.randomUUID(), role: "assistant", content: "جارٍ بدء البحث...", createdAt: Date.now() };
+    appendMessage(plan.projectId, userMessage);
+    appendMessage(plan.projectId, answer);
+    if (target.messages.length === 0) updateProject(plan.projectId, (item) => ({ ...item, name: plan.query.slice(0, 32) || "مشروع جديد" }));
+    setInput("");
+    setFileText("");
+    setFileName("");
+    const taskId = crypto.randomUUID();
+    setActivity((list) => [{ id: taskId, title: `بحث: ${plan.query.slice(0, 48)}`, status: "running" as const, time: Date.now() }, ...list].slice(0, 30));
+    setBusy(true);
+    const abort = new AbortController();
+    controller.current = abort;
+
+    try {
+      const response = await fetch("/api/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "execute", token: plan.token, query: plan.query }),
+        signal: abort.signal,
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || "تعذر بدء البحث.");
+      }
+      if (!response.body) throw new Error("تعذر استقبال تقدم البحث.");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let progress = "جارٍ البحث وقراءة الصفحات...";
+      let readSources: ReadSource[] = [];
+      const consumeFrame = (frame: string) => {
+        const eventName = frame.split(/\r?\n/).find((line) => line.startsWith("event:"))?.slice(6).trim();
+        const data = frame.split(/\r?\n/).find((line) => line.startsWith("data:"))?.slice(5).trim();
+        if (!eventName || !data) return;
+        const payload = JSON.parse(data);
+        if (eventName === "progress") {
+          progress += `\n${payload.message}`;
+          updateMessage(plan.projectId, answer.id, (item) => ({ ...item, content: progress }));
+        } else if (eventName === "sources") {
+          readSources = payload.sources || [];
+        } else if (eventName === "error") {
+          throw new Error(payload.error || "تعذر قراءة صفحات البحث.");
+        }
+      };
+      while (true) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value, { stream: !done });
+        const frames = buffer.split(/\r?\n\r?\n/);
+        buffer = frames.pop() || "";
+        for (const frame of frames) consumeFrame(frame);
+        if (done) {
+          if (buffer.trim()) consumeFrame(buffer);
+          break;
+        }
+      }
+      if (!readSources.length) throw new Error("لم تتوفر صفحات مقروءة لإعداد إجابة موثقة.");
+      const sources: Source[] = readSources.map(({ title, url, snippet }) => ({ title, url, snippet }));
+      updateMessage(plan.projectId, answer.id, (item) => ({ ...item, content: "", sources }));
+      const chat = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: plan.query,
+          memory: target.memory,
+          history: plan.history,
+          fileText: plan.attachedText ? `الملف ${plan.attachedName}:\n${plan.attachedText}` : "",
+          sources: readSources,
+        }),
+        signal: abort.signal,
+      });
+      if (!chat.ok) {
+        const result = await chat.json().catch(() => ({}));
+        throw new Error(result.error || "تعذر تلخيص المصادر.");
+      }
+      if (!chat.body) throw new Error("المتصفح لم يستقبل تدفق الرد.");
+      const chatReader = chat.body.getReader();
+      const chatDecoder = new TextDecoder();
+      let chatBuffer = "";
+      let fullText = "";
+      while (true) {
+        const { value, done } = await chatReader.read();
+        chatBuffer += chatDecoder.decode(value, { stream: !done });
+        const frames = chatBuffer.split(/\r?\n\r?\n/);
+        chatBuffer = frames.pop() || "";
+        for (const frame of frames) {
+          if (frame.startsWith("event: error")) {
+            const data = frame.split(/\r?\n/).find((line) => line.startsWith("data:"))?.slice(5).trim();
+            throw new Error(data ? JSON.parse(data).error : "انقطع الرد.");
+          }
+          const data = frame.split(/\r?\n/).find((line) => line.startsWith("data:"))?.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          fullText += (JSON.parse(data) as { text?: string }).text || "";
+          updateMessage(plan.projectId, answer.id, (item) => ({ ...item, content: fullText, sources }));
+        }
+        if (done) break;
+      }
+      setActivity((list) => list.map((item) => item.id === taskId ? { ...item, status: "done" } : item));
+    } catch (error) {
+      const stopped = abort.signal.aborted;
+      const detail = stopped ? "\n\n[أوقفت المهمة]" : `\n\nتعذر إكمال المهمة: ${error instanceof Error ? error.message : "خطأ غير متوقع"}`;
+      updateMessage(plan.projectId, answer.id, (item) => ({ ...item, content: item.content ? item.content + detail : detail.trim() }));
+      setActivity((list) => list.map((item) => item.id === taskId ? { ...item, status: stopped ? "stopped" : "error" } : item));
+    } finally {
+      setBusy(false);
+      controller.current = null;
+    }
+  }
+
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoginError("");
@@ -287,7 +430,7 @@ export default function Home() {
 
   function exportCsv() {
     if (!project) return;
-    const quote = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const quote = (value: string) => `"${(/^[\s]*[=+\-@]/.test(value) ? `'${value}` : value).replace(/"/g, '""')}"`;
     const rows = [["role", "message"], ...project.messages.map((message) => [message.role, message.content])];
     download(`\uFEFF${rows.map((row) => row.map(quote).join(",")).join("\r\n")}`, `${project.name || "conversation"}.csv`, "text/csv");
   }
@@ -336,6 +479,7 @@ export default function Home() {
       <div className="inspector-footer"><button onClick={() => project && download(project.messages.map((message) => `${message.role === "user" ? "أنت" : "Manus Mini"}:\n${message.content}`).join("\n\n"), `${project.name || "conversation"}.txt`)}>تنزيل المحادثة TXT ↓</button><button onClick={exportCsv}>تصدير جدول CSV ↓</button></div>
     </aside>
 
+    {researchPlan && <div className="overlay"><section className="dialog research-dialog" role="dialog" aria-modal="true" aria-labelledby="research-plan-title"><button className="dialog-close" onClick={() => setResearchPlan(null)} aria-label="إلغاء الخطة">×</button><span className="eyebrow-small">قبل بدء البحث</span><h2 id="research-plan-title">خطة البحث</h2><p className="research-query">{researchPlan.query}</p><ol className="research-steps">{researchPlan.steps.map((step) => <li key={step}>{step}</li>)}</ol><div className="candidate-heading"><b>الصفحات المقترحة للقراءة</b><span>{researchPlan.candidates.length} / 3</span></div>{researchPlan.candidates.length ? <div className="candidate-list">{researchPlan.candidates.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><span><b>{source.title}</b><small>{new URL(source.url).hostname}</small></span><i>↗</i></a>)}</div> : <p className="no-candidates">لم تظهر صفحات مناسبة في نتائج البحث. ألغِ هذه الخطة أو جرّب صياغة أخرى.</p>}<p className="research-note">بعد الموافقة، سيقرأ التطبيق الصفحات العامة الآمنة فقط، ثم يرسل مقتطفاتها مع طلبك إلى مزود الذكاء الاصطناعي. لن ينفذ إجراءات خارجية.</p><div className="dialog-actions"><button onClick={() => setResearchPlan(null)}>إلغاء</button><button className="primary-action" disabled={!researchPlan.candidates.length || busy} onClick={runApprovedResearch}>ابدأ البحث والقراءة</button></div></section></div>}
     {showSettings && <div className="overlay" onClick={() => setShowSettings(false)}><section className="dialog settings-dialog" onClick={(event) => event.stopPropagation()}><button className="dialog-close" onClick={() => setShowSettings(false)}>×</button><span className="eyebrow-small">الإعدادات</span><h2>الاتصال والخصوصية</h2><p>المفاتيح لا تظهر في الواجهة. اضبط المزود على الخادم داخل <code>.env.local</code>.</p><div className="setting-row"><span>مزود الذكاء الاصطناعي</span><b>{status?.provider || "gemini"}</b></div><div className="setting-row"><span>النموذج</span><b>{status?.model || "gemini-3.8-flash"}</b></div><div className="setting-row"><span>حالة المفتاح</span><b className={status?.configured ? "green" : "amber"}>{status?.configured ? "مُعدّ على الخادم" : "لم يُضف بعد"}</b></div><div className="setting-row"><span>حفظ مساحة العمل</span><b>{syncState === "saved" || syncState === "saving" ? "Supabase + المتصفح" : syncState === "error" ? "تعذر الاتصال" : "المتصفح فقط"}</b></div><pre className="env-help">AI_PROVIDER=gemini{"\n"}GEMINI_API_KEY=مفتاحك_هنا{"\n"}GEMINI_MODEL=gemini-3.8-flash</pre><p className="privacy-warning">{syncState === "saved" || syncState === "saving" ? "المحادثات والذاكرة محفوظة في Supabase وهذا المتصفح." : "المحادثات والذاكرة محفوظة في هذا المتصفح."} أرسل فقط ما تسمح بمشاركته مع مزود النموذج. لا يوجد تنفيذ لأوامر الكمبيوتر أو إرسال خارجي.</p>{status?.authRequired && authenticated && <button className="logout-action" onClick={async () => { cloudReady.current = false; await fetch("/api/access", { method: "DELETE" }); setAuthenticated(false); setShowSettings(false); }}>قفل الجلسة</button>}<button className="primary-action" onClick={() => setShowSettings(false)}>تم</button></section></div>}
     {confirmText && <div className="overlay"><section className="dialog"><span className="confirm-icon">!</span><h2>طلب حساس</h2><p>هذا الطلب يتضمن إرسالًا أو حذفًا أو إجراءً مؤثرًا. التطبيق لا ينفذ هذه الإجراءات؛ هل تريد متابعة طلب <b>خطة أو شرح فقط</b> من النموذج؟</p><div className="dialog-actions"><button onClick={() => setConfirmText("")}>إلغاء</button><button className="primary-action" onClick={() => { const text = confirmText; setConfirmText(""); sendMessage(text, true); }}>تابع التخطيط فقط</button></div></section></div>}
     {status?.setupRequired && <div className="overlay"><section className="dialog"><span className="confirm-icon">!</span><h2>أمّن التطبيق قبل نشره</h2><p>النسخة المنشورة تحتاج <code>APP_ACCESS_PASSWORD</code> و<code>SESSION_SECRET</code> في إعدادات الخادم قبل تفعيل API.</p><button className="primary-action" onClick={() => setShowSettings(true)}>عرض الإعدادات</button></section></div>}
