@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-export type Provider = "gemini" | "huggingface" | "nvidia";
+export type Provider = "gemini" | "huggingface" | "nvidia" | "groq";
 
 export class ProviderError extends Error {
   constructor(message: string, public status = 502) {
@@ -12,6 +12,7 @@ export function providerConfig() {
   const provider = (process.env.AI_PROVIDER || "gemini").toLowerCase() as Provider;
   if (provider === "huggingface") return { provider, model: process.env.HF_MODEL || "", ready: Boolean(process.env.HF_TOKEN && process.env.HF_MODEL) };
   if (provider === "nvidia") return { provider, model: process.env.NVIDIA_MODEL || "meta/llama-3.3-70b-instruct", ready: Boolean(process.env.NVIDIA_API_KEY) };
+  if (provider === "groq") return { provider, model: "openai/gpt-oss-20b", ready: Boolean(process.env.GROQ_API_KEY) };
   return { provider: "gemini" as const, model: process.env.GEMINI_MODEL || "gemini-3.8-flash", ready: Boolean(process.env.GEMINI_API_KEY) };
 }
 
@@ -59,11 +60,12 @@ export async function createTextStream(prompt: string, signal: AbortSignal): Pro
     })();
   }
 
-  const isHuggingFace = config.provider === "huggingface";
-  const endpoint = isHuggingFace
+  const endpoint = config.provider === "huggingface"
     ? process.env.HF_BASE_URL || "https://router.huggingface.co/v1/chat/completions"
-    : process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1/chat/completions";
-  const token = isHuggingFace ? process.env.HF_TOKEN! : process.env.NVIDIA_API_KEY!;
+    : config.provider === "groq"
+      ? "https://api.groq.com/openai/v1/chat/completions"
+      : process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1/chat/completions";
+  const token = config.provider === "huggingface" ? process.env.HF_TOKEN! : config.provider === "groq" ? process.env.GROQ_API_KEY! : process.env.NVIDIA_API_KEY!;
   const response = await fetch(endpoint, {
     method: "POST",
     signal,
